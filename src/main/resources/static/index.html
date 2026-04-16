@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background-color: #f5f7fa;
+        }
+
+        h1 {
+            color: #007BFF;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #search {
+            width: 40%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .add-btn {
+            background-color: #28a745;
+        }
+
+        .edit-btn {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        td, th {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📘 Student Dashboard</h1>
+
+    <input type="text" id="name" placeholder="Enter Name">
+    <input type="number" id="marks" placeholder="Enter Marks">
+    <button class="add-btn" onclick="addStudent()">Add Student</button>
+
+    <br>
+
+    <!-- 🔍 SEARCH BOX -->
+    <input type="text" id="search" placeholder="🔍 Search by name" onkeyup="searchStudent()">
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Marks</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="studentTable"></tbody>
+    </table>
+
+<script>
+
+function loadStudents() {
+    fetch('http://localhost:8080/students')
+    .then(res => res.json())
+    .then(data => {
+        let table = document.getElementById("studentTable");
+        table.innerHTML = "";
+
+        data.forEach(student => {
+            let row = `
+                <tr>
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td>${student.marks}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editStudent(${student.id})">Edit</button>
+                        <button class="delete-btn" onclick="deleteStudent(${student.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+            table.innerHTML += row;
+        });
+    });
+}
+
+function addStudent() {
+    let name = document.getElementById("name").value;
+    let marks = document.getElementById("marks").value;
+
+    fetch('http://localhost:8080/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, marks })
+    })
+    .then(() => {
+        loadStudents();
+    });
+}
+
+function deleteStudent(id) {
+    fetch(`http://localhost:8080/students/${id}`, {
+        method: 'DELETE'
+    })
+    .then(() => loadStudents());
+}
+
+function editStudent(id) {
+    let newName = prompt("Enter new name:");
+    let newMarks = prompt("Enter new marks:");
+
+    fetch(`http://localhost:8080/students/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, marks: newMarks })
+    })
+    .then(() => loadStudents());
+}
+
+/* 🔍 SEARCH FUNCTION */
+function searchStudent() {
+    let input = document.getElementById("search").value.toLowerCase();
+    let rows = document.querySelectorAll("#studentTable tr");
+
+    rows.forEach(row => {
+        let name = row.children[1].innerText.toLowerCase();
+        row.style.display = name.includes(input) ? "" : "none";
+    });
+}
+
+/* LOAD DATA ON PAGE LOAD */
+loadStudents();
+
+</script>
+
+</body>
+</html>
